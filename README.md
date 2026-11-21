@@ -70,9 +70,11 @@ Stores decisions, events, reasoning, delivery state, and operational audit recor
 ```text
 Medical Drone Delivery/
 ├── README.md
+├── Medical_Drone_Delivery_System_Architecture.png
 └── web/
-    └── html/
-        └── home.html
+      └── html/
+      └── css/
+      └── javascript/
 ```
 
 ## Getting Started
