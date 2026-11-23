@@ -75,6 +75,8 @@ Medical Drone Delivery/
       └── html/
       └── css/
       └── javascript/
+      └── resource/
+      └── user/
 ```
 
 ## Getting Started
