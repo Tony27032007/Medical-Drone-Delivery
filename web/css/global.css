@@ -1,0 +1,86 @@
+a {
+      text-decoration: none;
+}
+.menu{
+      width: max-content;
+      height: 5vw;
+      display: flex;
+      flex-direction: column;
+      border-radius: 1rem;
+      border-style: hidden;
+      background-color: transparent;
+      justify-content: flex-start;
+      transition: ease-in-out 0.2s;
+      position:fixed;
+}
+.menu:hover{
+      display: flex;
+      flex-direction: column;
+      height: 40vw;
+      justify-content: space-around;
+}
+.menu .menu-button{
+      width: auto;
+      height: auto;
+      background-color: transparent;
+      border: none;
+      border-radius: 2rem;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(1rem);
+      transition: all 200ms ease;
+}
+
+.menu:hover .menu-button{
+      visibility: visible;
+      transform: translateY(0);
+      opacity: 1;
+      border-radius: 10rem;
+      border-style: hidden;
+      background-color: lightskyblue;
+      width: 5vw;
+      height: 5vw;
+      
+}
+.menu:hover .menu-button:hover{
+      width: fit-content;
+      height: 5vw;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-content: center;
+}
+.reveal{
+      visibility: hidden;
+      opacity: 0;
+      display: none;
+      
+}
+.menu:hover .menu-button:hover .reveal{
+      visibility: visible;
+      opacity: 1;
+      display: block;
+      font-size: medium;
+      text-align: justify;
+      padding: auto;
+      text-wrap: none;
+      margin: auto;
+      transition: all 200ms ease;
+}
+.menu:hover .menu-button:nth-child(2) { transition-delay: 0.1s; }
+.menu:hover .menu-button:nth-child(3) { transition-delay: 0.2s; }
+.menu:hover .menu-button:nth-child(4) { transition-delay: 0.3s; }
+.menu:hover .menu-button:nth-child(5) { transition-delay: 0.4s; }
+.menu-img{
+      width: 5vw;
+      height: 5vw;
+      border-radius: 10rem;
+      border-style: hidden;
+      background-color: lightskyblue;
+      padding: 1vw;
+}
+.menu-button:disabled{
+      background-color: rgba(0, 0, 0, 0.6) !important; 
+}
+/*navbar*/

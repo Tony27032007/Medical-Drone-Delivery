@@ -1,0 +1,32 @@
+.outer-container{
+      background-color: rgba(0, 0, 0, 0.1);
+      width: 90vw;
+      height: 90vh;
+      justify-self: center;
+      align-self: center;
+      display: flex;
+      justify-content: space-between;
+      
+}
+.profile-pic{
+      background-color: rgba(0, 0, 0, 0.5);
+      width: 40vw;
+      height: 90vh;
+      border-radius: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-content: center;
+      justify-content: space-between;
+}
+.info{
+      background-color: rgba(0, 0, 0, 0.5);
+      width: 40vw;
+      height: 90vh;
+      border-radius: 2rem;
+}
+.pic{
+      width: 25vw;
+      height: 25vw;
+      border-radius: 100%;
+      align-self: center;
+}
