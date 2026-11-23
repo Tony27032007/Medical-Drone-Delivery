@@ -84,7 +84,7 @@ Medical Drone Delivery/
 The repository currently contains a static HTML entry point. From the project directory, open the page directly:
 
 ```bash
-open web/html/home.html
+open web/html/dashboard.html
 ```
 
 Or serve the project with a local static server:
@@ -93,7 +93,7 @@ Or serve the project with a local static server:
 python3 -m http.server 8080
 ```
 
-Then open `http://localhost:8080/web/html/home.html`.
+Then open `http://localhost:8080/web/html/dashboard.html`.
 
 ## API Language Choice
 
