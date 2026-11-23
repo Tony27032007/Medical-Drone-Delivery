@@ -95,6 +95,36 @@ python3 -m http.server 8080
 
 Then open `http://localhost:8080/web/html/home.html`.
 
+## API Language Choice
+
+_Author: Yukheang Kang_
+
+The API will be built with **Node.js** using Express or Fastify.
+
+- **Existing direction:** The project already considered Node.js and npm as the hosting method.
+- **One language end to end:** The dashboard needs JavaScript, so the whole team only has to know one language.
+- **Real-time support:** WebSockets and server-sent events are straightforward in Node.js, which suits live dashboard updates.
+- **Fast setup:** `npm init`, `express` and the built-in `fetch` give a working server in minutes.
+- **Static hosting:** `express.static('web')` can serve the front end, replacing the Python server.
+
+### Calling external APIs
+
+External APIs (Telstra network, location and connectivity services) should not be called from the browser, because that exposes API keys and runs into CORS. The browser calls our Node server, and the server calls the external API using keys held in `.env`.
+
+### Alternative
+
+Python with FastAPI is a reasonable alternative if the team is stronger in Python or the AI Agent logic relies heavily on Python libraries.
+
+### Suggested server structure
+
+```text
+server/
+├── index.js          # Express app, serves web/ and mounts routes
+├── routes/           # telemetry, drones, approvals
+├── services/         # wrappers for external APIs (stable interfaces)
+└── .env              # API keys (add to .gitignore)
+```
+
 ## Suggested Implementation Roadmap
 
 - Add the operations dashboard and responsive data views.
