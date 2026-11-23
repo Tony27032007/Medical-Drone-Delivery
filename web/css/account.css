@@ -5,8 +5,7 @@
       justify-self: center;
       align-self: center;
       display: flex;
-      justify-content: space-between;
-      
+      justify-content: space-evenly;
 }
 .profile-pic{
       background-color: rgba(0, 0, 0, 0.5);

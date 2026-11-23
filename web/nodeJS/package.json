@@ -1,0 +1,14 @@
+{
+  "name": "medical-drone-delivery-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "http-server .. -p 3000 -o /html/login.html"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
