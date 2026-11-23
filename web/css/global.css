@@ -43,7 +43,7 @@ a {
       
 }
 .menu:hover .menu-button:hover{
-      width: fit-content;
+      width: max-content;
       height: 5vw;
       display: flex;
       flex-direction: row;
