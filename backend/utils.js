@@ -1,9 +1,12 @@
 import "dotenv/config"; // Automatically loads .env into process.env
 import { randomUUID } from "node:crypto";
+import http from "node:http";
 
 // Endpoints
 const API_ENDPOINT =
     "https://prod.okapi.ogw.evolve.okapi.telstra.com/mobility/products-api";
+const BETA_API_ENDPOINT =
+    "https://prod.okapi.ogw.evolve.okapi.telstra.com/telstradev/v1/sandbox";
 const AUTH_ENDPOINT =
     "https://prod.okapi.ogw.evolve.okapi.telstra.com/og-network-auth-prod/api/realms/network-auth/protocol/openid-connect";
 const NOTIFICATION_DESTINATION = null;
@@ -14,6 +17,7 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 let ACCESS_TOKEN = null;
 
 // Devices keyed by MSISDN
+const devices = new Map();
 const unsubbedDevices = new Map();
 const subbedDevices = new Map();
 
@@ -35,7 +39,7 @@ class Device {
     }
 }
 
-async function getToken() {
+async function tokenAPI() {
     const url = `${AUTH_ENDPOINT}/token`;
 
     const body = new URLSearchParams({
@@ -58,7 +62,7 @@ async function getToken() {
     } catch (error) {
         console.error("/token: Network error:", error.message);
         ACCESS_TOKEN = null;
-        return 503;
+        return null;
     }
 
     if (!res.ok) {
@@ -80,25 +84,19 @@ async function getToken() {
         }
 
         ACCESS_TOKEN = null;
-        return res.status;
+        return res;
     }
 
     const resBody = await res.json();
     ACCESS_TOKEN = resBody.access_token ?? null;
 
-    return res.status;
+    return res;
 }
 
-async function subDevices() {
-    if (ACCESS_TOKEN === null) {
-        if ((await getToken()) !== 200) {
-            return 401;
-        }
-    }
-
+async function subscriptionsAPI(subscriptions) {
     const url = `${API_ENDPOINT}/loss-of-connectivity/v0/subscriptions`;
 
-    const headers = {
+    let headers = {
         Authorization: `Bearer ${ACCESS_TOKEN}`,
         Accept: "application/json",
         "Accept-Charset": "utf-8",
@@ -109,12 +107,7 @@ async function subDevices() {
 
     const body = {
         monitoringType: "LOSS_OF_CONNECTIVITY",
-        subscriptions: [
-            {
-                msisdn: [...unsubbedDevices.keys()],
-                notificationDestination: NOTIFICATION_DESTINATION,
-            },
-        ],
+        subscriptions: subscriptions,
     };
 
     let retry = true;
@@ -131,16 +124,263 @@ async function subDevices() {
             });
         } catch (error) {
             console.error("Subscription request failed:", error.message);
-            return 503;
+            return null;
         }
 
-        let resBody;
+        const resBody = await res.json();
 
+        switch (res.status) {
+            case 201:
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 201 Successful subscription.",
+                );
+                console.log(resBody);
+                break;
+            case 207:
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 207 Partial success - some subscriptions failed.",
+                );
+                console.log(resBody.errors);
+
+                for (const err of resBody.errors ?? []) {
+                    if (err.status === 401) {
+                        const res = await tokenAPI();
+                        if (res !== null && res.ok) {
+                            retry = true;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case 400:
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 400 Invalid request.",
+                );
+                console.log(resBody);
+                break;
+            case 401:
+                const res = await tokenAPI();
+                if (res !== null && res.ok) {
+                    retry = true;
+                    headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
+                    break;
+                }
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 401 Unauthorized.",
+                );
+                console.log(resBody);
+                break;
+            case 403:
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 403 Forbidden",
+                );
+                console.log(resBody);
+                break;
+            case 404:
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 404 Not found",
+                );
+                console.log(resBody);
+                break;
+            case 500:
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 500 Internal server error",
+                );
+                console.log(resBody);
+                break;
+            case 503:
+                console.log(
+                    "/loss-of-connectivity/v0/subscriptions: 503 Service unavailable",
+                );
+                console.log(resBody);
+                break;
+            default:
+                console.log(
+                    `/loss-of-connectivity/v0/subscriptions: ${res.status}`,
+                );
+                console.log(resBody);
+        }
+    }
+
+    return res;
+}
+
+async function locationRetreivalAPI(device) {
+    let headers = {
+        "Content-Type": "application/json",
+        "X-Correlator": randomUUID(),
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+    };
+
+    const body = {
+        device: device,
+        maxAge: 0,
+    };
+
+    let retry = true;
+    let res;
+    const url = BETA_API_ENDPOINT + "/location-retrieval/retrieve";
+    while (retry) {
+        retry = false;
         try {
-            resBody = await res.json();
-        } catch {
-            resBody = {};
+            res = await fetch(url, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(body),
+            });
+        } catch (error) {
+            console.log("Failed to get location: ", error.message);
+            return null;
         }
+        const resBody = await res.json();
+
+        switch (res.status) {
+            case 400:
+                console.log("/location-retrieval/retrieve: 400 Bad Request.");
+                console.log(resBody);
+                break;
+            case 401:
+                const res = await tokenAPI();
+                if (res !== null && res.ok) {
+                    retry = true;
+                    headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
+                    break;
+                }
+                console.log("/location-retrieval/retrieve: 401 Unauthorized.");
+                console.log(resBody);
+                break;
+            case 403:
+                console.log("/location-retrieval/retrieve: 403 Forbidden.");
+                console.log(resBody);
+                break;
+            case 404:
+                console.log("/location-retrieval/retrieve: 404 Not found.");
+                console.log(resBody);
+                break;
+            case 422:
+                console.log(
+                    "/location-retrieval/retrieve: 422 Unprocessable Content.",
+                );
+                console.log(resBody);
+                break;
+            default:
+                console.log(`/location-retrieval/retrieve: ${res.status}.`);
+                console.log(resBody);
+        }
+    }
+
+    return res;
+}
+
+async function networkAvailabilityAPI(suburb, state, postcode) {
+    let headers = {
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        "Accept-Charset": "utf-8",
+        Accept: "application/json",
+        "Correlation-Id": randomUUID(),
+        "Content-Language": "en",
+        "Content-Type": "application/json",
+    };
+    const url =
+        API_ENDPOINT +
+        "/network-availability/v1/status" +
+        `?suburb=${suburb}&state=${state}&postcode=${postcode}`;
+
+    let retry = true;
+    let res;
+    while (retry) {
+        retry = false;
+        try {
+            res = await fetch(url, { headers });
+            const resBody = await res.json();
+
+            switch (res.status) {
+                case 400:
+                    console.log(
+                        "/network-availability/v1/status: 400 Invalid request or location.",
+                    );
+                    console.log(resBody);
+                    break;
+                case 401:
+                    const res = await tokenAPI();
+                    if (res !== null && res.ok) {
+                        retry = true;
+                        headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
+                        break;
+                    }
+                    console.log(
+                        "/network-availability/v1/status: 401 Missing or invalid authentication token.",
+                    );
+                    console.log(resBody);
+                    break;
+                case 403:
+                    console.log(
+                        "/network-availability/v1/status: 403 Insufficient permissions or no active product subscription.",
+                    );
+                    console.log(resBody);
+                    break;
+                case 404:
+                    console.log(
+                        "/network-availability/v1/status: 404 Gateway-owned resource: resource not found.",
+                    );
+                    console.log(resBody);
+                    break;
+                case 405:
+                    console.log(
+                        "/network-availability/v1/status: 405 Gateway-owned resource: method not allowed.",
+                    );
+                    console.log(resBody);
+                    break;
+                case 429:
+                    console.log(
+                        "/network-availability/v1/status: 429 Gateway-owned resource: rate limit exceeded.",
+                    );
+                    console.log(resBody);
+                    break;
+                case 500:
+                    console.log(
+                        "/network-availability/v1/status: 500 An unexpected internal error or downstream timeout occured.",
+                    );
+                    console.log(resBody);
+                    break;
+                case 503:
+                    console.log(
+                        "/network-availability/v1/status: 503 A downstream dependency is unavailable.",
+                    );
+                    console.log(resBody);
+                    break;
+                default:
+                    console.log(
+                        `/network-availability/v1/status: ${res.status}.`,
+                    );
+                    console.log(resBody);
+            }
+        } catch (error) {
+            console.log("Failed to get network availability: ", error.message);
+        }
+    }
+
+    return res ?? null;
+}
+
+async function subDevices() {
+    if (ACCESS_TOKEN === null) {
+        const res = await tokenAPI();
+        if (res === null || !res.ok) {
+            return 401;
+        }
+    }
+
+    const res =
+        (await subscriptionsAPI([
+            {
+                msisdn: [...unsubbedDevices.keys()],
+                notificationDestination: NOTIFICATION_DESTINATION,
+            },
+        ])) ?? null;
+
+    if (res !== null) {
+        const resBody = await res.json();
 
         for (const sub of resBody.subscriptions ?? []) {
             const msisdn = sub.msisdn;
@@ -157,102 +397,86 @@ async function subDevices() {
             unsubbedDevices.delete(msisdn);
         }
 
-        switch (res.status) {
-            case 201:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 201 Successful subscription.",
-                );
-                console.log(resBody.errors);
-                break;
-            case 207:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 207 Partial success - some subscriptions failed.",
-                );
-                console.log(resBody.errors);
-
-                for (const err of resBody.errors ?? []) {
-                    if (err.status === 401) {
-                        if ((await getToken()) === 200) {
-                            retry = true;
-                            break;
-                        }
-                    }
-                }
-                break;
-            case 400:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 400 Invalid request.",
-                );
-                console.log(resBody.errors);
-                break;
-            case 401:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 401 Unauthorized.",
-                );
-                console.log(resBody.errors);
-
-                if ((await getToken()) === 200) {
-                    retry = true;
-                }
-
-                break;
-            case 403:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 403 Forbidden",
-                );
-                console.log(resBody.errors);
-                break;
-            case 404:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 404 Not found",
-                );
-                console.log(resBody.errors);
-                break;
-            case 500:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 500 Internal server error",
-                );
-                console.log(resBody.errors);
-                break;
-            case 503:
-                console.log(
-                    "/loss-of-connectivity/v0/subscriptions: 503 Service unavailable",
-                );
-                console.log(resBody.errors);
-                break;
-            default:
-                console.log(
-                    `/loss-of-connectivity/v0/subscriptions: ${res.status}`,
-                );
-                console.log(resBody.errors);
-        }
+        return res.status;
     }
 
-    return res.status;
+    return null;
 }
 
 function dispatchDrone() {
     // TODO: Implement drone dispatch logic
 }
 
-export function GetDashboardData(req, res) {
-    const header = {
-        "Content-Type": "application/json",
-        "X-Correlator": randomUUID(),
-    };
+// The function sends SSEs to the client
+export function GetLocationData(req, res) {
+    res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+    });
 
-    const body = {
-        device: "",
-        maxAge: "b",
-        maxSurface: "a",
-    };
-    // Map + location
-    // Connection status
-    // Dispatch status
-    // Task: destination, starting, payload
+    let closed = false;
+
+    res.on("close", () => {
+        closed = true;
+    });
+
+    async function poll() {
+        if (closed) return;
+
+        try {
+            const devLocations = await Promise.all(
+                Array.from(devices, async ([msisdn, dev]) => {
+                    try {
+                        const apiRes = await locationRetreivalAPI({
+                            ipv4Address: dev.ipv4Address,
+                        });
+
+                        if (!apiRes?.ok) return null;
+
+                        const resBody = await apiRes.json();
+
+                        const latitude = resBody?.area?.center?.latitude;
+                        const longitude = resBody?.area?.center?.longitude;
+
+                        if (latitude == null || longitude == null) {
+                            return null;
+                        }
+
+                        return {
+                            device: msisdn,
+                            location: { latitude, longitude },
+                        };
+                    } catch (error) {
+                        console.error(
+                            `Location retrieval failed for ${msisdn}:`,
+                            error.message,
+                        );
+                        return null;
+                    }
+                }),
+            );
+
+            const validLocations = devLocations.filter(
+                (location) => location !== null,
+            );
+
+            if (!closed) {
+                res.write(`data: ${JSON.stringify(validLocations)}\n\n`);
+            }
+        } catch (error) {
+            console.error("SSE polling error:", error.message);
+        }
+
+        if (!closed) {
+            setTimeout(poll, 5000);
+        }
+    }
+
+    poll();
 }
 
-export function NotificationHandler(req, res) {
+export async function NotificationHandler(req, res) {
     // Accept notification
     res.writeHead(202);
     res.end();
@@ -270,31 +494,63 @@ export function NotificationHandler(req, res) {
         PURGED_AMF: 8,
     };
 
-    let body = "";
-    req.on("data", (chunk) => {
-        body += chunk;
-    });
-    body = json.JSON(body);
+    let rawBody = "";
+    for await (const chunk of req) {
+        rawBody += chunk;
+    }
+    const body = JSON.parse(rawBody) ?? null;
+    if (body === null) {
+        return;
+    }
 
     // Send notification to dashboard
     // TODO: Connect with frontend
 
     // Handle loss of connection reason
-    switch (body.monitoringEventReports.lossOfConnectReason) {
-        case lossOfConnectReason.UE_DETACHED_MME:
-        case lossOfConnectReason.UE_DETACHED_SGSN:
-        case lossOfConnectReason.DEREGISTERED_AMF:
-            // Handle detached/deregistration
-            break;
-        case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_MME:
-        case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_SGSN:
-        case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_AMF:
-            // Check network availability or error
-            break;
-        case lossOfConnectReason.UE_PURGED_MME:
-        case lossOfConnectReason.UE_PURGED_SGSN:
-        case lossOfConnectReason.PURGED_AMF:
-            // Handle purged registration
-            break;
+    const locationAvailability = new Map();
+    for (const report of body.monitoringEventReports) {
+        let netAvailable = false;
+
+        // Get location via a reverse geocoding API
+        const suburb = PLACEHOLDER;
+        const state = PLACEHOLDER;
+        const postcode = PLACEHOLDER;
+        const key = `${suburb}|${state}|${postcode}`;
+
+        // Check if network is down at location
+        if (locationAvailability.has(key)) {
+            if (locationAvailability.get(key)) {
+                netAvailable = true;
+            }
+        } else {
+            const res =
+                (await networkAvailabilityAPI(suburb, state, postcode)) ?? null;
+            if (res !== null) {
+                const resBody = await res.json();
+                if (res.ok && !resBody.current) {
+                    netAvailable = true;
+                }
+                locationAvailability.set(key, netAvailable);
+            }
+        }
+
+        // Handle loss of connection
+        switch (report.lossOfConnectReason) {
+            case lossOfConnectReason.UE_DETACHED_MME:
+            case lossOfConnectReason.UE_DETACHED_SGSN:
+            case lossOfConnectReason.DEREGISTERED_AMF:
+                // Handle detached/deregistration
+                break;
+            case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_MME:
+            case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_SGSN:
+            case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_AMF:
+                // Handle connectivity timeout
+                break;
+            case lossOfConnectReason.UE_PURGED_MME:
+            case lossOfConnectReason.UE_PURGED_SGSN:
+            case lossOfConnectReason.PURGED_AMF:
+                // Handle purged registration
+                break;
+        }
     }
 }
