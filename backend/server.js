@@ -1,4 +1,4 @@
-import { GetLocationData, NotificationHandler } from "./utils.js";
+import { GetLocationData, NotificationHandler } from "./routes.js";
 import http from "node:http";
 
 // Create server

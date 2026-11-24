@@ -1,0 +1,221 @@
+import { IncomingMessage, ServerResponse } from "node:http";
+
+const NOTIFICATION_DESTINATION = null;
+
+// Devices keyed by MSISDN
+const devices = new Map();
+const unsubbedDevices = new Map();
+const subbedDevices = new Map();
+
+class Device {
+    constructor(
+        msisdn = null,
+        subscriptionId = null,
+        notificationDestination = null,
+        ipv4Address = null,
+        ipv6Address = null,
+        phoneNumber = null,
+    ) {
+        this.msisdn = msisdn;
+        this.subscriptionId = subscriptionId;
+        this.notificationDestination = notificationDestination;
+        this.ipv4Address = ipv4Address;
+        this.ipv6Address = ipv6Address;
+        this.phoneNumber = phoneNumber;
+    }
+}
+
+async function subDevices() {
+    const res =
+        (await subscriptionsAPI([
+            {
+                msisdn: [...unsubbedDevices.keys()],
+                notificationDestination: NOTIFICATION_DESTINATION,
+            },
+        ])) ?? null;
+
+    if (res !== null) {
+        const resBody = await res.json();
+
+        for (const sub of resBody.subscriptions ?? []) {
+            const msisdn = sub.msisdn;
+
+            subbedDevices.set(
+                msisdn,
+                new Device(
+                    msisdn,
+                    sub.subscriptionId,
+                    sub.notificationDestination,
+                ),
+            );
+
+            unsubbedDevices.delete(msisdn);
+        }
+
+        return res.status;
+    }
+
+    return null;
+}
+
+function dispatchDrone() {
+    // TODO: Implement drone dispatch logic
+}
+
+// Handler for the route: /device-locations
+// The function sends SSEs to the client
+/**
+ * @param { IncomingMessage } req
+ * @param { ServerResponse } res
+ */
+export function GetLocationData(req, res) {
+    res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+    });
+
+    let closed = false;
+
+    res.on("close", () => {
+        closed = true;
+    });
+
+    async function poll() {
+        if (closed) return;
+
+        try {
+            const devLocations = await Promise.all(
+                Array.from(devices, async ([msisdn, dev]) => {
+                    try {
+                        const apiRes = await locationRetreivalAPI({
+                            ipv4Address: dev.ipv4Address,
+                        });
+
+                        if (!apiRes?.ok) return null;
+
+                        const resBody = await apiRes.json();
+
+                        const latitude = resBody?.area?.center?.latitude;
+                        const longitude = resBody?.area?.center?.longitude;
+
+                        if (latitude == null || longitude == null) {
+                            return null;
+                        }
+
+                        return {
+                            device: msisdn,
+                            location: { latitude, longitude },
+                        };
+                    } catch (error) {
+                        console.error(
+                            `Location retrieval failed for ${msisdn}:`,
+                            error.message,
+                        );
+                        return null;
+                    }
+                }),
+            );
+
+            const validLocations = devLocations.filter(
+                (location) => location !== null,
+            );
+
+            if (!closed) {
+                res.write(`data: ${JSON.stringify(validLocations)}\n\n`);
+            }
+        } catch (error) {
+            console.error("SSE polling error:", error.message);
+        }
+
+        if (!closed) {
+            setTimeout(poll, 5000);
+        }
+    }
+
+    poll();
+}
+
+// Handler for the route: /notification-destination
+/**
+ * @param { IncomingMessage } req
+ * @param { ServerResponse } res
+ */
+export async function NotificationHandler(req, res) {
+    // Accept notification
+    res.writeHead(202);
+    res.end();
+
+    // Process notificaiton
+    const lossOfConnectReason = {
+        UE_DETACHED_MME: 0,
+        UE_DETACHED_SGSN: 1,
+        MAX_DETECTION_TIME_EXPIRED_MME: 2,
+        MAX_DETECTION_TIME_EXPIRED_SGSN: 3,
+        UE_PURGED_MME: 4,
+        UE_PURGED_SGSN: 5,
+        DEREGISTERED_AMF: 6,
+        MAX_DETECTION_TIME_EXPIRED_AMF: 7,
+        PURGED_AMF: 8,
+    };
+
+    let rawBody = "";
+    for await (const chunk of req) {
+        rawBody += chunk;
+    }
+    const body = JSON.parse(rawBody) ?? null;
+    if (body === null) {
+        return;
+    }
+
+    // Send notification to dashboard
+    // TODO: Connect with frontend
+
+    // Handle loss of connection reason
+    const locationAvailability = new Map();
+    for (const report of body.monitoringEventReports) {
+        let netAvailable = false;
+
+        // Get location via a reverse geocoding API
+        const suburb = PLACEHOLDER;
+        const state = PLACEHOLDER;
+        const postcode = PLACEHOLDER;
+        const key = `${suburb}|${state}|${postcode}`;
+
+        // Check if network is down at location
+        if (locationAvailability.has(key)) {
+            if (locationAvailability.get(key)) {
+                netAvailable = true;
+            }
+        } else {
+            const res =
+                (await networkAvailabilityAPI(suburb, state, postcode)) ?? null;
+            if (res !== null) {
+                const resBody = await res.json();
+                if (res.ok && !resBody.current) {
+                    netAvailable = true;
+                }
+                locationAvailability.set(key, netAvailable);
+            }
+        }
+
+        // Handle loss of connection
+        switch (report.lossOfConnectReason) {
+            case lossOfConnectReason.UE_DETACHED_MME:
+            case lossOfConnectReason.UE_DETACHED_SGSN:
+            case lossOfConnectReason.DEREGISTERED_AMF:
+                // Handle detached/deregistration
+                break;
+            case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_MME:
+            case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_SGSN:
+            case lossOfConnectReason.MAX_DETECTION_TIME_EXPIRED_AMF:
+                // Handle connectivity timeout
+                break;
+            case lossOfConnectReason.UE_PURGED_MME:
+            case lossOfConnectReason.UE_PURGED_SGSN:
+            case lossOfConnectReason.PURGED_AMF:
+                // Handle purged registration
+                break;
+        }
+    }
+}
