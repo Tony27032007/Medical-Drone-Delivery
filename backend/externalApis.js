@@ -8,12 +8,27 @@ const BETA_API_ENDPOINT =
     "https://prod.okapi.ogw.evolve.okapi.telstra.com/telstradev/v1/sandbox";
 const AUTH_ENDPOINT =
     "https://prod.okapi.ogw.evolve.okapi.telstra.com/og-network-auth-prod/api/realms/network-auth/protocol/openid-connect";
+const GOOGLE_GEOCODING_URL =
+    "https://maps.googleapis.com/maps/api/geocode/json";
 
 // Credentials
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 let ACCESS_TOKEN = null;
 
+/**
+ * Requests an OAuth 2.0 access token using client credentials.
+ *
+ * @returns {Promise<Response | null>}
+ * Response body has the form:
+ * {
+ *   access_token: string,
+ *   token_type: string,
+ *   expires_in: number,
+ *   scope: string
+ * }
+ */
 async function tokenAPI() {
     const url = `${AUTH_ENDPOINT}/token`;
 
@@ -68,7 +83,37 @@ async function tokenAPI() {
     return res;
 }
 
-async function subscriptionsAPI(subscriptions) {
+/**
+ * Creates loss-of-connectivity subscriptions for the specified devices.
+ * @param {{
+ *   msisdn: string[],
+ *   notificationDestination: string
+ * }[]} subscriptions - Device subscription configurations.
+ *
+ * @returns {Promise<Response | null>}
+ * Response body has the form:
+ * {
+ *   correlationId: string,
+ *   status: number,
+ *   timeStamp: number,
+ *   message?: string,
+ *   subscriptions: Array<{
+ *     subscriptionId: string,
+ *     msisdn: string,
+ *     status: number,
+ *     notificationDestination: string
+ *   }>,
+ *   errors?: Array<{
+ *     type: string,
+ *     "message-content": string,
+ *     status: number,
+ *     msisdn: string,
+ *     notificationDestination: string,
+ *     reason?: string
+ *   }>
+ * }
+ */
+export async function SubscriptionsAPI(subscriptions) {
     const url = `${API_ENDPOINT}/loss-of-connectivity/v0/subscriptions`;
 
     let headers = {
@@ -180,7 +225,33 @@ async function subscriptionsAPI(subscriptions) {
     return res;
 }
 
-async function locationRetreivalAPI(device) {
+/**
+ * Retrieves the latest available location of a device.
+ *
+ *
+ * @param {{
+ *   ipv4Address: {
+ *     publicAddress: string,
+ *     publicPort: number
+ *   }
+ * }} device - Device identification details.
+ *
+ * @returns {Promise<Response | null>}
+ *
+ * Response body has the form:
+ * {
+ *   lastLocationTime: string,
+ *   area: {
+ *     areaType: string,
+ *     center: {
+ *       latitude: number,
+ *       longitude: number
+ *     },
+ *     radius: number
+ *   }
+ * }
+ */
+export async function LocationRetreivalAPI(device) {
     let headers = {
         "Content-Type": "application/json",
         "X-Correlator": randomUUID(),
@@ -247,7 +318,72 @@ async function locationRetreivalAPI(device) {
     return res;
 }
 
-async function networkAvailabilityAPI(suburb, state, postcode) {
+/**
+ * Checks network availability for a specified location.
+ *
+ * @param {string} suburb - Suburb name.
+ * @param {string} state - State or territory code.
+ * @param {string} postcode - Postal code.
+ *
+ * @returns {Promise<Response | null>}
+ *
+ * Response body has the form:
+ * {
+ *   correlationId: string,
+ *   status: number,
+ *   timeStamp: number,
+ *   past: Array<{
+ *     state: string,
+ *     suburb: string,
+ *     postcode: string,
+ *     start_timestamp: string,
+ *     end_timestamp: string,
+ *     root_cause: string,
+ *     duration: number,
+ *     description: string,
+ *     is_planned: boolean,
+ *     technology: string,
+ *     affected_area?: string
+ *   }>,
+ *   near_future: Array<{
+ *     state: string,
+ *     suburb: string,
+ *     postcode: string,
+ *     start_timestamp: string,
+ *     end_timestamp: string,
+ *     root_cause: string,
+ *     duration: number,
+ *     description: string,
+ *     is_planned: boolean,
+ *     technology: string
+ *   }>,
+ *   far_future: Array<{
+ *     state: string,
+ *     suburb: string,
+ *     postcode: string,
+ *     start_timestamp: string,
+ *     end_timestamp: string,
+ *     root_cause: string,
+ *     duration: number,
+ *     description: string,
+ *     is_planned: boolean,
+ *     technology: string
+ *   }>,
+ *   current: Array<{
+ *     state: string,
+ *     suburb: string,
+ *     postcode: string,
+ *     start_timestamp: string,
+ *     end_timestamp: string | null,
+ *     root_cause: string,
+ *     duration: number,
+ *     description: string,
+ *     is_planned: boolean,
+ *     technology: string
+ *   }>
+ * }
+ */
+export async function NetworkAvailabilityAPI(suburb, state, postcode) {
     let headers = {
         Authorization: `Bearer ${ACCESS_TOKEN}`,
         "Accept-Charset": "utf-8",
@@ -336,4 +472,98 @@ async function networkAvailabilityAPI(suburb, state, postcode) {
     }
 
     return res ?? null;
+}
+
+/**
+ * Reverse geocodes coordinates into Australian address components.
+ *
+ * @param {number} latitude
+ * @param {number} longitude
+ * @returns {Promise<{
+ *   suburb: string | null,
+ *   state: string | null,
+ *   postcode: string | null
+ * }>}
+ */
+export async function GetAddressAPI(latitude, longitude) {
+    if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
+    ) {
+        throw new Error("Invalid latitude or longitude");
+    }
+
+    const url = new URL(GOOGLE_GEOCODING_URL);
+
+    url.searchParams.set("latlng", `${latitude},${longitude}`);
+    url.searchParams.set("key", GOOGLE_MAPS_API_KEY);
+    url.searchParams.set("language", "en");
+    url.searchParams.set("region", "au");
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Google API HTTP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === "ZERO_RESULTS") {
+        return {
+            suburb: null,
+            state: null,
+            postcode: null,
+        };
+    }
+
+    if (data.status !== "OK") {
+        throw new Error(
+            `Google Geocoding API error: ${data.status} - ${data.error_message ?? ""}`,
+        );
+    }
+
+    // Search all results because address components can vary.
+    const components = data.results.flatMap(
+        (result) => result.address_components,
+    );
+
+    // Find an address component by its Google Maps type.
+    const findComponent = (...types) =>
+        components.find((component) =>
+            types.some((type) => component.types.includes(type)),
+        );
+
+    const suburb = findComponent(
+        "locality",
+        "postal_town",
+        "sublocality_level_1",
+        "sublocality",
+    )?.short_name;
+
+    const STATES = ["QLD", "NSW", "ACT", "VIC", "TAS", "SA", "WA", "NT"];
+    const country = findComponent("country")?.short_name;
+    let state = findComponent("administrative_area_level_1")?.short_name;
+    if (country === "AU") {
+        if (!state) {
+            state = "NAT";
+        } else if (!STATES.includes(state)) {
+            state = "OT";
+        }
+    } else if (country) {
+        state = "INT";
+    } else {
+        state = null;
+    }
+
+    const postcode = findComponent("postal_code")?.short_name;
+
+    return {
+        suburb: suburb ?? null,
+        state: state ?? null,
+        postcode: postcode ?? null,
+    };
 }

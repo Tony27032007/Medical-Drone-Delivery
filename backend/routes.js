@@ -1,11 +1,15 @@
 import { IncomingMessage, ServerResponse } from "node:http";
+import {
+    SubscriptionsAPI,
+    LocationRetreivalAPI,
+    NetworkAvailabilityAPI,
+    GetAddressAPI,
+} from "./externalApis";
 
 const NOTIFICATION_DESTINATION = null;
 
 // Devices keyed by MSISDN
 const devices = new Map();
-const unsubbedDevices = new Map();
-const subbedDevices = new Map();
 
 class Device {
     constructor(
@@ -15,6 +19,8 @@ class Device {
         ipv4Address = null,
         ipv6Address = null,
         phoneNumber = null,
+        latitude = null,
+        longitude = null,
     ) {
         this.msisdn = msisdn;
         this.subscriptionId = subscriptionId;
@@ -22,14 +28,18 @@ class Device {
         this.ipv4Address = ipv4Address;
         this.ipv6Address = ipv6Address;
         this.phoneNumber = phoneNumber;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 }
 
 async function subDevices() {
     const res =
-        (await subscriptionsAPI([
+        (await SubscriptionsAPI([
             {
-                msisdn: [...unsubbedDevices.keys()],
+                msisdn: [...devices.entries()]
+                    .filter(([_, device]) => device.subscriptionId !== null)
+                    .map(([key]) => key),
                 notificationDestination: NOTIFICATION_DESTINATION,
             },
         ])) ?? null;
@@ -38,18 +48,9 @@ async function subDevices() {
         const resBody = await res.json();
 
         for (const sub of resBody.subscriptions ?? []) {
-            const msisdn = sub.msisdn;
-
-            subbedDevices.set(
-                msisdn,
-                new Device(
-                    msisdn,
-                    sub.subscriptionId,
-                    sub.notificationDestination,
-                ),
-            );
-
-            unsubbedDevices.delete(msisdn);
+            devices[sub.msisdn].subscriptionId = sub.subscriptionId;
+            devices[sub.msisdn].notificationDestination =
+                sub.notificationDestination;
         }
 
         return res.status;
@@ -88,7 +89,7 @@ export function GetLocationData(req, res) {
             const devLocations = await Promise.all(
                 Array.from(devices, async ([msisdn, dev]) => {
                     try {
-                        const apiRes = await locationRetreivalAPI({
+                        const apiRes = await LocationRetreivalAPI({
                             ipv4Address: dev.ipv4Address,
                         });
 
@@ -176,10 +177,12 @@ export async function NotificationHandler(req, res) {
     for (const report of body.monitoringEventReports) {
         let netAvailable = false;
 
-        // TODO: Get location via a reverse geocoding API
-        const suburb = PLACEHOLDER;
-        const state = PLACEHOLDER;
-        const postcode = PLACEHOLDER;
+        // Get location via a reverse geocoding API
+        const dev = devices.get(report.msisdn);
+        const address = await GetAddressAPI(dev.latitude, dev.longitude);
+        const suburb = address.suburb;
+        const state = address.state;
+        const postcode = address.postcode;
         const key = `${suburb}|${state}|${postcode}`;
 
         // Check if network is down at location
@@ -189,7 +192,7 @@ export async function NotificationHandler(req, res) {
             }
         } else {
             const res =
-                (await networkAvailabilityAPI(suburb, state, postcode)) ?? null;
+                (await NetworkAvailabilityAPI(suburb, state, postcode)) ?? null;
             if (res !== null) {
                 const resBody = await res.json();
                 if (res.ok && !resBody.current) {
