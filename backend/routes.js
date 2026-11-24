@@ -176,7 +176,7 @@ export async function NotificationHandler(req, res) {
     for (const report of body.monitoringEventReports) {
         let netAvailable = false;
 
-        // Get location via a reverse geocoding API
+        // TODO: Get location via a reverse geocoding API
         const suburb = PLACEHOLDER;
         const state = PLACEHOLDER;
         const postcode = PLACEHOLDER;
