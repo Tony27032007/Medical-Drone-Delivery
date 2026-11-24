@@ -1,4 +1,4 @@
-const source = new EventSource("/device-locations");
+const source = new EventSource("/api/device-locations");
 
 source.addEventListener("tick", (e) => {
     const data = JSON.parse(e.data);
