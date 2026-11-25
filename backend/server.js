@@ -1,21 +1,21 @@
-import { GetLocationData, NotificationHandler } from "./routes.js";
+import { HandleAPIs } from "./routes/api.js";
+import { HandlePages } from "./routes/pages.js";
 import http from "node:http";
 
 // Create server
-const server = http.createServer((req, res) => {
-    const routes = {
-        "/device-locations": GetLocationData,
-        "/notification-destination": NotificationHandler,
-    };
-
-    const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
-    const handler = routes[parsedUrl.pathname];
-
-    if (handler) {
-        handler(req, res);
-    } else {
-        res.writeHead(404, { "Content-Type": "text/plain" });
-        res.end("404 Not Found");
+const server = http.createServer(async (req, res) => {
+    try {
+        const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+        const pathname = parsedUrl.pathname;
+        if (pathname.startsWith("/api/")) {
+            await HandleAPIs(req, res, pathname);
+        } else {
+            await HandlePages(req, res, pathname);
+        }
+    } catch (error) {
+        console.log(error);
+        res.writeHead(500);
+        res.end("Internal Server Error");
     }
 });
 

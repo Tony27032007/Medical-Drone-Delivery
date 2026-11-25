@@ -6,6 +6,16 @@ import {
     GetAddressAPI,
 } from "./externalApis.js";
 
+// API Handler
+export async function HandleAPIs(req, res, url) {
+    const routes = {
+        "/api/device-locations": GetLocationData,
+        "/api/notification-destination": NotificationHandler,
+    };
+    const handler = routes[url];
+    await handler(req, res);
+}
+
 const NOTIFICATION_DESTINATION = null;
 
 // Devices keyed by MSISDN

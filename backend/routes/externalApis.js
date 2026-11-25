@@ -1,4 +1,4 @@
-import "dotenv/config"; // Automatically loads .env into process.env
+import "dotenv/config";
 import { randomUUID } from "node:crypto";
 
 // Endpoints
