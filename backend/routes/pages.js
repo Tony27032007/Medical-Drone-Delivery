@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs/promises";
+import { IncomingMessage, ServerResponse } from "node:http";
 
 const WEB_DIR = path.resolve("web");
 
@@ -16,6 +17,11 @@ const MIME_TYPE = {
     ".webp": "image/webp",
 };
 
+/**
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @param {string} pathname
+ */
 export async function HandlePages(req, res, pathname) {
     if (pathname === "/") {
         res.writeHead(302, {
