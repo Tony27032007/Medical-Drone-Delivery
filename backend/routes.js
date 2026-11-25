@@ -4,7 +4,7 @@ import {
     LocationRetreivalAPI,
     NetworkAvailabilityAPI,
     GetAddressAPI,
-} from "./externalApis";
+} from "./externalApis.js";
 
 const NOTIFICATION_DESTINATION = null;
 
