@@ -3,16 +3,45 @@
 <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Document</title>
+      <meta name="theme-color" content="#f3f8fc">
+      <title>Sign in | Medical Drone Delivery</title>
       <link rel="stylesheet" href="../css/login.css">
 </head>
 <body>
-      <div class="login-container">
-            <div class="login-info">
-                  <input class="login" type="email" name="user-email" id="email" placeholder="Email">
-                  <input class="login" type="text" placeholder="Password">
-            </div>
-            <button class="submit-login" type="submit"></button>
-      </div>
+      <main class="login-container">
+            <header class="login-header">
+                  <div class="brand-mark" aria-hidden="true">MD</div>
+                  <p class="eyebrow">MEDICAL DRONE DELIVERY</p>
+                  <h1>Welcome back</h1>
+                  <p class="subtitle">Sign in to your operations account</p>
+            </header>
+
+            <form class="login-form" id="login-form">
+                  <label for="email">Work email</label>
+                  <input class="login" type="email" name="user-email" id="email" placeholder="you@organization.com" autocomplete="username" required>
+
+                  <label for="password">Password</label>
+                  <input class="login" type="password" name="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+
+                  <section class="enrollment-panel" id="enrollment-panel" hidden>
+                        <p>Add this account to your authenticator app using the setup key below:</p>
+                        <img class="authenticator-qr" id="authenticator-qr" alt="QR code for adding this account to your authenticator app">
+                        <code id="authenticator-key"></code>
+                  </section>
+
+                  <details class="two-factor" id="two-factor" hidden>
+                        <summary id="two-factor-summary">Authenticator verification</summary>
+                        <label for="verification-code">Two-factor authentication code</label>
+                        <input class="login code-input" type="text" name="verification-code" id="verification-code" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" aria-describedby="code-hint" disabled>
+                        <span class="field-hint" id="code-hint">Enter the code from your authenticator app.</span>
+                  </details>
+
+                  <button class="submit-login" type="submit">Sign in</button>
+                  <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+            </form>
+
+            <p class="security-note"><span aria-hidden="true">●</span> Secure access for authorized operations staff</p>
+      </main>
+      <script src="../scripts/login.js" defer></script>
 </body>
 </html>

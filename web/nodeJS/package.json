@@ -3,15 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "http-server .. -p 3000 -o /html/login.html"
+    "start": "node static-server.js"
   },
   "engines": {
-    "node": ">=18"
-  },
-  "devDependencies": {
-    "http-server": "^14.1.1"
-  },
-  "dependencies": {
-    "path": "^0.12.7"
+    "node": ">=22.5"
   }
 }

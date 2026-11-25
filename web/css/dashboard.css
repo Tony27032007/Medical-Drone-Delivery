@@ -1,0 +1,54 @@
+.dash-map{
+      background-image: url(../resource/Gemini_Generated_Image_wntgbmwntgbmwntg.jpg);
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      width: 55vw;
+      height: 90vh;
+      border-radius: 2rem;
+      border-style: groove;
+      border-color: black;
+      border-width: 0.1rem;
+      
+}
+.outer-contain{
+      width: 90vw;
+      height: 90vh;
+      display: flex;
+      border-width: 0.1rem;
+      justify-self: center;
+      align-self: center;
+      justify-content: space-evenly;
+      
+}
+.half{
+      width: 25vw;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+}
+.notification{
+      width: inherit;
+      height: 25vh;
+      background-color: aliceblue;
+      border-radius: 2rem;
+      border-style: groove;
+      border-color: black;
+}
+.approve-center{
+      width: inherit;
+      height: 25vh;
+      background-color: aliceblue;
+      border-radius: 2rem;
+      border-style: groove;
+      border-color: black;
+}
+.general-info{
+      width: inherit;
+      height: 25vh;
+      background-color: aliceblue;
+      border-radius: 2rem;
+      border-style: groove;
+      border-color: black;
+}

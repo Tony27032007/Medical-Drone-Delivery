@@ -22,7 +22,12 @@ const MIME_TYPE = {
  * @param {ServerResponse} res
  * @param {string} pathname
  */
-export async function HandlePages(req, res, pathname) {
+export async function HandlePages(
+    req,
+    res,
+    pathname,
+    injectTabSessionGuard = false,
+) {
     if (pathname === "/") {
         res.writeHead(302, {
             Location: "html/dashboard.html",
@@ -43,14 +48,25 @@ export async function HandlePages(req, res, pathname) {
     }
 
     try {
-        const content = await fs.readFile(filePath);
         const extension = path.extname(filePath).toLowerCase();
+        const content = await fs.readFile(filePath);
+        const responseContent =
+            injectTabSessionGuard && extension === ".html"
+                ? Buffer.from(
+                      content
+                          .toString("utf8")
+                          .replace(
+                              /<\/head>/i,
+                              '<script>document.documentElement.style.visibility="hidden"</script><script src="/scripts/tab-session.js" defer></script></head>',
+                          ),
+                  )
+                : content;
 
         res.writeHead(200, {
             "Content-Type": MIME_TYPE[extension] ?? "application/octet-stream",
         });
 
-        res.end(content);
+        res.end(responseContent);
     } catch (err) {
         if (err.code === "ENOENT" || err.code === "EISDIR") {
             res.writeHead(404);

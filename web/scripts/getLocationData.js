@@ -1,4 +1,7 @@
-const source = new EventSource("/api/device-locations");
+const tabSessionId = sessionStorage.getItem("mdd_tab_session");
+const locationsUrl = new URL("/api/device-locations", location.origin);
+if (tabSessionId) locationsUrl.searchParams.set("tab", tabSessionId);
+const source = new EventSource(locationsUrl);
 
 source.addEventListener("tick", (e) => {
     const data = JSON.parse(e.data);
