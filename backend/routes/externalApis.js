@@ -12,7 +12,7 @@ const GOOGLE_GEOCODING_URL =
     "https://maps.googleapis.com/maps/api/geocode/json";
 
 // Credentials
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 let ACCESS_TOKEN = null;
@@ -500,7 +500,7 @@ export async function GetAddressAPI(latitude, longitude) {
     const url = new URL(GOOGLE_GEOCODING_URL);
 
     url.searchParams.set("latlng", `${latitude},${longitude}`);
-    url.searchParams.set("key", GOOGLE_MAPS_API_KEY);
+    url.searchParams.set("key", GOOGLE_API_KEY);
     url.searchParams.set("language", "en");
     url.searchParams.set("region", "au");
 

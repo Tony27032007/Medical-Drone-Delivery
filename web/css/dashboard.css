@@ -1,0 +1,32 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Navigation occupies its own space */
+nav {
+    position: relative;
+    flex: 0 0 auto;
+    width: 100%;
+    z-index: 10;
+}
+
+/* Map occupies the remaining space */
+main {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Google Maps */
+#map {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+}

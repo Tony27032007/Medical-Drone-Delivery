@@ -74,28 +74,33 @@ function dispatchDrone() {
 }
 
 // Handler for the route: /device-locations
-// The function sends SSEs to the client
+// Sends device locations to clients using Server-Sent Events.
+
 /**
- * @param { IncomingMessage } req
- * @param { ServerResponse } res
+ * @param { import("node:http").IncomingMessage } req
+ * @param { import("node:http").ServerResponse } res
  */
 export function GetLocationData(req, res) {
     res.writeHead(200, {
         "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
+        "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
     });
 
     let closed = false;
+    let timeout;
 
+    // Detect client disconnection
     res.on("close", () => {
         closed = true;
+        clearTimeout(timeout);
     });
 
     async function poll() {
         if (closed) return;
 
         try {
+            // Retrieve locations for all registered devices
             const devLocations = await Promise.all(
                 Array.from(devices, async ([msisdn, dev]) => {
                     try {
@@ -110,19 +115,28 @@ export function GetLocationData(req, res) {
                         const latitude = resBody?.area?.center?.latitude;
                         const longitude = resBody?.area?.center?.longitude;
 
-                        if (latitude == null || longitude == null) {
+                        if (
+                            latitude == null ||
+                            longitude == null ||
+                            !Number.isFinite(Number(latitude)) ||
+                            !Number.isFinite(Number(longitude))
+                        ) {
                             return null;
                         }
 
                         return {
                             device: msisdn,
-                            location: { latitude, longitude },
+                            location: {
+                                latitude: Number(latitude),
+                                longitude: Number(longitude),
+                            },
                         };
                     } catch (error) {
                         console.error(
                             `Location retrieval failed for ${msisdn}:`,
                             error.message,
                         );
+
                         return null;
                     }
                 }),
@@ -132,18 +146,24 @@ export function GetLocationData(req, res) {
                 (location) => location !== null,
             );
 
-            if (!closed) {
-                res.write(`data: ${JSON.stringify(validLocations)}\n\n`);
+            // Send SSE event
+            if (!closed && !res.destroyed) {
+                res.write(
+                    `event: tick\n` +
+                        `data: ${JSON.stringify(validLocations)}\n\n`,
+                );
             }
         } catch (error) {
             console.error("SSE polling error:", error.message);
         }
 
-        if (!closed) {
-            setTimeout(poll, 5000);
+        // Schedule next poll
+        if (!closed && !res.destroyed) {
+            timeout = setTimeout(poll, 5000);
         }
     }
 
+    // Start polling
     poll();
 }
 
