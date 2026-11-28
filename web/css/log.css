@@ -1,0 +1,59 @@
+.outer-contain{
+      width: 90vw;
+      height: 90vh;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+}
+.log-panel{
+      width: 85vw;
+      height: 90vh;
+}
+.log-header{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1rem;
+      margin-bottom: 1rem;
+}
+.log-filters{
+      display: flex;
+      gap: 0.5rem;
+}
+
+/* each row looks like a white .item card: border-spacing puts a gap between rows */
+.log-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 0.4rem;
+      font-size: 0.85rem;
+}
+.log-table th{
+      padding: 0 0.9rem;
+      color: #6b7d8b;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-align: left;
+      text-transform: uppercase;
+}
+.log-table td{
+      padding: 0.65rem 0.9rem;
+      background-color: #fff;
+}
+.log-table td:first-child{
+      border-radius: 1rem 0 0 1rem;
+}
+.log-table td:last-child{
+      border-radius: 0 1rem 1rem 0;
+}
+
+@media (max-width: 50rem) {
+      .log-panel{
+            width: 90vw;
+      }
+      .log-filters{
+            width: 100%;
+            flex-direction: column;
+      }
+}

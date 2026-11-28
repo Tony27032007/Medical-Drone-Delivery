@@ -9,7 +9,7 @@
 </head>
 <nav>
       <div class="menu">
-            <img class="menu-img" src="../resource/bars-solid-full.svg" alt="">
+            <button class="menu-img" type="button" aria-label="Open menu"><img src="../resource/bars-solid-full.svg" alt=""></button>
             <button class="menu-button" disabled><img src="../resource/house-solid-full.svg" alt=""><span class="reveal">DashBoard</span></button>
             <button class="menu-button" onclick="window.location.href='log.html'"><img src="../resource/clock-rotate-left-solid-full.svg" alt=""><span class="reveal">Logs</span></button>
             <button class="menu-button" onclick="window.location.href='setting.html'"><img src="../resource/gear-solid-full.svg" alt=""><span class="reveal">Settings</span></button>
@@ -23,35 +23,41 @@
             </div>
 
             <div class="half">
-                  <div class="notification">
+                  <div class="notification panel">
+                        <h2 class="panel-title">Notifications</h2>
                         <!--dynamic fill with js and below is a temp for each-->
-                        <div class="message">
+                        <div class="message item">
                               <div class="content">
                                     <h3>title</h3>
                                     <h4>body</h4>
                               </div>
-                              <div>
+                              <div class="item-actions">
                                     <p>time</p>
-                                    <button onclick=""></button> <!--click and this message is deleted-->
+                                    <button class="btn" onclick="" aria-label="Dismiss">&times;</button> <!--click and this message is deleted-->
                               </div>
                         </div>
                   </div>
-                  <div class="approve-center">
+                  <div class="approve-center panel">
+                        <h2 class="panel-title">Approval requests</h2>
                         <!--dynamic fill with js and below is a temp for each-->
-                        <div class="request">
+                        <div class="request item">
                               <div class="content">
                                     <h3>request</h3>
                                     <h4>detail</h4>
                               </div>
-                              <div>
-                                    <button onclick="">X</button> <!--click and decline-->
-                                    <button onclick="">OK</button> <!--click and approve-->
+                              <div class="item-actions">
+                                    <button class="btn btn-decline" onclick="">X</button> <!--click and decline-->
+                                    <button class="btn btn-approve" onclick="">OK</button> <!--click and approve-->
                               </div>
                         </div>
                   </div>
-                  <div class="general-info">
+                  <div class="general-info panel">
+                        <h2 class="panel-title">Fleet status</h2>
                         <!--dynamic fill with js and below is a temp for each-->
-                        
+                        <div class="info-row item">
+                              <h4>label</h4>
+                              <h3>value</h3>
+                        </div>
                   </div>
             </div>
       </div>

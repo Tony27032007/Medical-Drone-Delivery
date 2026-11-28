@@ -9,7 +9,7 @@
 </head>
 <nav>
       <div class="menu">
-            <img class="menu-img" src="../resource/bars-solid-full.svg" alt="">
+            <button class="menu-img" type="button" aria-label="Open menu"><img src="../resource/bars-solid-full.svg" alt=""></button>
             <button class="menu-button" onclick="window.location.href='dashboard.html'"><img src="../resource/house-solid-full.svg" alt=""><span class="reveal">DashBoard</span></button>
             <button class="menu-button"  disabled ><img src="../resource/clock-rotate-left-solid-full.svg" alt=""><span class="reveal">Logs</span></button>
             <button class="menu-button" onclick="window.location.href='setting.html'"><img src="../resource/gear-solid-full.svg" alt=""><span class="reveal">Settings</span></button>
@@ -17,6 +17,47 @@
       </div>
 </nav>
 <body>
-      
+      <div class="outer-contain">
+            <div class="log-panel panel">
+                  <div class="log-header">
+                        <div>
+                              <p class="eyebrow">ACTIVITY</p>
+                              <h2 class="panel-title">Logs</h2>
+                        </div>
+                        <div class="log-filters">
+                              <input class="field" type="search" placeholder="Search drone or event" aria-label="Search logs">
+                              <select class="field" aria-label="Filter by event type">
+                                    <option>All events</option>
+                                    <option>Telemetry</option>
+                                    <option>Decision</option>
+                                    <option>Approval</option>
+                                    <option>Alert</option>
+                              </select>
+                        </div>
+                  </div>
+
+                  <table class="log-table">
+                        <thead>
+                              <tr>
+                                    <th>Time</th>
+                                    <th>Drone</th>
+                                    <th>Event</th>
+                                    <th>Detail</th>
+                                    <th>Status</th>
+                              </tr>
+                        </thead>
+                        <tbody>
+                              <!--dynamic fill with js and below is a temp for each-->
+                              <tr>
+                                    <td>time</td>
+                                    <td>drone</td>
+                                    <td>event</td>
+                                    <td>detail</td>
+                                    <td><span class="badge">status</span></td> <!--badge-ok / badge-alert for colour-->
+                              </tr>
+                        </tbody>
+                  </table>
+            </div>
+      </div>
 </body>
 </html>

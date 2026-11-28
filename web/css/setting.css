@@ -1,0 +1,39 @@
+.outer-contain{
+      width: 90vw;
+      height: 90vh;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-evenly;
+}
+.setting-panel{
+      width: 40vw;
+      height: 90vh;
+}
+.section-gap{
+      margin-top: 1.5rem;
+}
+.toggle{
+      width: 1.2rem;
+      height: 1.2rem;
+      accent-color: #176f91;
+      cursor: pointer;
+}
+.setting-actions{
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+}
+
+@media (max-width: 50rem) {
+      .outer-contain{
+            height: auto;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+      }
+      .setting-panel{
+            width: 90vw;
+            height: auto;
+      }
+}

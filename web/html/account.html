@@ -9,7 +9,7 @@
 </head>
 <nav>
       <div class="menu">
-            <img class="menu-img" src="../resource/bars-solid-full.svg" alt="">
+            <button class="menu-img" type="button" aria-label="Open menu"><img src="../resource/bars-solid-full.svg" alt=""></button>
             <button class="menu-button" onclick="window.location.href='dashboard.html'"><img src="../resource/house-solid-full.svg" alt=""><span class="reveal">DashBoard</span></button>            <button class="menu-button" onclick="window.location.href='log.html'"><img src="../resource/clock-rotate-left-solid-full.svg" alt=""><span class="reveal">Logs</span></button>
             <button class="menu-button" onclick="window.location.href='setting.html'"><img src="../resource/gear-solid-full.svg" alt=""><span class="reveal">Settings</span></button>
             <button class="menu-button" disabled><img src="../resource/user-solid-full.svg" alt=""><span class="reveal">Account</span></button>
@@ -17,13 +17,35 @@
 </nav>
 <body>
       <div class="outer-container">
-            <div class="profile-pic">
-                  <img src="../user/ronald.jpg" alt="" class="pic">
-                  <button></button>
+            <div class="profile-pic panel">
+                  <img src="../user/ronald.jpg" alt="Profile picture" class="pic">
+                  <div>
+                        <h2 class="panel-title">name</h2>
+                        <p class="eyebrow">role</p>
+                  </div>
+                  <button class="btn" onclick="">Change photo</button> <!--click and upload a new photo-->
             </div>
 
-            <div class="info">
-                  
+            <div class="info panel">
+                  <p class="eyebrow">ACCOUNT</p>
+                  <h2 class="panel-title">Account details</h2>
+                  <!--dynamic fill with js and below is a temp for each-->
+                  <div class="item">
+                        <div class="content">
+                              <h4>label</h4>
+                              <h3>value</h3>
+                        </div>
+                  </div>
+
+                  <h2 class="panel-title section-gap">Recent sign-ins</h2>
+                  <!--dynamic fill with js and below is a temp for each-->
+                  <div class="item">
+                        <div class="content">
+                              <h3>time</h3>
+                              <h4>device</h4>
+                        </div>
+                        <span class="badge badge-ok">status</span>
+                  </div>
             </div>
       </div>
 </body>

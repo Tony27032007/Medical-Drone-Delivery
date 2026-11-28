@@ -9,7 +9,7 @@
 </head>
 <nav>
       <div class="menu">
-            <img class="menu-img" src="../resource/bars-solid-full.svg" alt="">
+            <button class="menu-img" type="button" aria-label="Open menu"><img src="../resource/bars-solid-full.svg" alt=""></button>
             <button class="menu-button" onclick="window.location.href='dashboard.html'"><img src="../resource/house-solid-full.svg" alt=""><span class="reveal">DashBoard</span></button>
             <button class="menu-button" onclick="window.location.href='log.html'"><img src="../resource/clock-rotate-left-solid-full.svg" alt=""><span class="reveal">Logs</span></button>
             <button class="menu-button" disabled><img src="../resource/gear-solid-full.svg" alt=""><span class="reveal">Settings</span></button>
@@ -17,6 +17,78 @@
       </div>
 </nav>
 <body>
-      
+      <div class="outer-contain">
+            <div class="setting-panel panel">
+                  <p class="eyebrow">PREFERENCES</p>
+                  <h2 class="panel-title">Notifications</h2>
+                  <div class="item">
+                        <div class="content">
+                              <h3>Connectivity alerts</h3>
+                              <h4>When a drone loses network connection</h4>
+                        </div>
+                        <input class="toggle" type="checkbox" aria-label="Connectivity alerts" checked>
+                  </div>
+                  <div class="item">
+                        <div class="content">
+                              <h3>Approval requests</h3>
+                              <h4>When an action is waiting for approval</h4>
+                        </div>
+                        <input class="toggle" type="checkbox" aria-label="Approval requests" checked>
+                  </div>
+                  <div class="item">
+                        <div class="content">
+                              <h3>Delivery completed</h3>
+                              <h4>When a drone arrives at its destination</h4>
+                        </div>
+                        <input class="toggle" type="checkbox" aria-label="Delivery completed">
+                  </div>
+
+                  <h2 class="panel-title section-gap">Dashboard</h2>
+                  <div class="item">
+                        <div class="content">
+                              <h3>Location refresh</h3>
+                              <h4>How often drone positions update</h4>
+                        </div>
+                        <select class="field" aria-label="Location refresh">
+                              <option>5 seconds</option>
+                              <option>15 seconds</option>
+                              <option>30 seconds</option>
+                        </select>
+                  </div>
+            </div>
+
+            <div class="setting-panel panel">
+                  <p class="eyebrow">SECURITY</p>
+                  <h2 class="panel-title">Sign-in</h2>
+                  <div class="item">
+                        <div class="content">
+                              <h3>Two-factor authentication</h3>
+                              <h4>Authenticator app</h4>
+                        </div>
+                        <span class="badge badge-ok">On</span>
+                  </div>
+                  <div class="item">
+                        <div class="content">
+                              <h3>Session</h3>
+                              <h4>Ends when this tab is closed</h4>
+                        </div>
+                  </div>
+
+                  <h2 class="panel-title section-gap">System</h2>
+                  <!--dynamic fill with js and below is a temp for each-->
+                  <div class="item">
+                        <div class="content">
+                              <h3>service</h3>
+                              <h4>detail</h4>
+                        </div>
+                        <span class="badge">status</span> <!--badge-ok / badge-alert for colour-->
+                  </div>
+
+                  <div class="setting-actions">
+                        <button class="btn" onclick="">Save changes</button> <!--click and save settings-->
+                        <button class="btn btn-decline" onclick="">Sign out</button> <!--click and sign out-->
+                  </div>
+            </div>
+      </div>
 </body>
 </html>

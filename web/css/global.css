@@ -8,11 +8,22 @@ html {
 a {
       text-decoration: none;
 }
+body{
+      margin: 0;
+      padding: 5vh 0;
+      color: #183044;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
 .menu{
+      --menu-size: 3rem; /* change this one number to resize the whole navbar */
       width: max-content;
-      height: 5vw;
+      height: var(--menu-size);
       display: flex;
       flex-direction: column;
+      gap: 0.75rem;
+      top: 1rem;
+      left: 1rem;
+      z-index: 10;
       border-radius: 1rem;
       border-style: hidden;
       background-color: transparent;
@@ -20,43 +31,48 @@ a {
       transition: ease-in-out 0.2s;
       position:fixed;
 }
-.menu:hover{
-      display: flex;
-      flex-direction: column;
-      height: 40vw;
-      justify-content: space-around;
+/* :focus-within = "something inside the menu is focused" (e.g. after clicking/tapping ☰).
+   Using it next to :hover lets the menu open by click, tap and keyboard, not only mouse hover. */
+.menu:hover,
+.menu:focus-within{
+      height: auto;
 }
 .menu .menu-button{
-      width: auto;
-      height: auto;
+      box-sizing: border-box;
+      width: var(--menu-size);
+      height: var(--menu-size);
+      padding: 0.6rem;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
       background-color: transparent;
       border: none;
-      border-radius: 2rem;
+      border-radius: 10rem;
       opacity: 0;
       visibility: hidden;
       transform: translateY(1rem);
       transition: all 200ms ease;
 }
+/* the icons had no size, so the SVGs rendered ~300px wide and overflowed */
+.menu .menu-button img{
+      width: calc(var(--menu-size) - 1.2rem);
+      height: calc(var(--menu-size) - 1.2rem);
+      flex-shrink: 0;
+}
 
-.menu:hover .menu-button{
+.menu:hover .menu-button,
+.menu:focus-within .menu-button{
       visibility: visible;
       transform: translateY(0);
       opacity: 1;
-      border-radius: 10rem;
-      border-style: hidden;
       background-color: lightskyblue;
-      width: 5vw;
-      height: 5vw;
-      
 }
-.menu:hover .menu-button:hover{
+.menu .menu-button:hover,
+.menu .menu-button:focus-visible{
       width: max-content;
-      height: 5vw;
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      justify-content: flex-start;
-      align-content: center;
+      padding-right: 1rem;
 }
 .reveal{
       visibility: hidden;
@@ -64,30 +80,158 @@ a {
       display: none;
       
 }
-.menu:hover .menu-button:hover .reveal{
+.menu .menu-button:hover .reveal,
+.menu .menu-button:focus-visible .reveal{
       visibility: visible;
       opacity: 1;
       display: block;
       font-size: medium;
-      text-align: justify;
-      padding: auto;
-      text-wrap: none;
-      margin: auto;
+      white-space: nowrap;
       transition: all 200ms ease;
 }
-.menu:hover .menu-button:nth-child(2) { transition-delay: 0.1s; }
-.menu:hover .menu-button:nth-child(3) { transition-delay: 0.2s; }
-.menu:hover .menu-button:nth-child(4) { transition-delay: 0.3s; }
-.menu:hover .menu-button:nth-child(5) { transition-delay: 0.4s; }
+.menu:is(:hover, :focus-within) .menu-button:nth-child(2) { transition-delay: 0.1s; }
+.menu:is(:hover, :focus-within) .menu-button:nth-child(3) { transition-delay: 0.2s; }
+.menu:is(:hover, :focus-within) .menu-button:nth-child(4) { transition-delay: 0.3s; }
+.menu:is(:hover, :focus-within) .menu-button:nth-child(5) { transition-delay: 0.4s; }
 .menu-img{
-      width: 5vw;
-      height: 5vw;
+      box-sizing: border-box;
+      width: var(--menu-size);
+      height: var(--menu-size);
       border-radius: 10rem;
       border-style: hidden;
       background-color: lightskyblue;
-      padding: 1vw;
+      padding: 0.6rem;
+      cursor: pointer;
+}
+.menu-img img{
+      width: 100%;
+      height: 100%;
 }
 .menu-button:disabled{
-      background-color: rgba(0, 0, 0, 0.6) !important; 
+      cursor: default;
+}
+.menu-button:disabled{
+      background-color: rgba(0, 0, 0, 0.6) !important;
 }
 /*navbar*/
+
+/* ---------- shared page pieces (used by dashboard, log, setting, account) ---------- */
+
+/* the rounded box from Tony's dashboard (.notification / .approve-center / .general-info) */
+.panel{
+      box-sizing: border-box;
+      background-color: aliceblue;
+      border-radius: 2rem;
+      border-style: groove;
+      border-color: black;
+      padding: 1.25rem 1.5rem;
+      overflow-y: auto;
+}
+.panel-title{
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+}
+/* small uppercase label, same as .eyebrow on the login page */
+.eyebrow{
+      margin: 0 0 0.3rem;
+      color: #4a839c;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+}
+
+/* one row inside a panel: title/detail on the left, extra info or buttons on the right */
+.item{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      padding: 0.6rem 0.9rem;
+      background-color: #fff;
+      border-radius: 1rem;
+}
+.item h3{
+      margin: 0;
+      font-size: 0.95rem;
+}
+.item h4{
+      margin: 0.15rem 0 0;
+      color: #6b7d8b;
+      font-size: 0.8rem;
+      font-weight: 400;
+}
+.item p{
+      margin: 0 0 0.3rem;
+      color: #6b7d8b;
+      font-size: 0.75rem;
+}
+.item-actions{
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-shrink: 0;
+}
+
+/* buttons: pill shape like the navbar, colours from the login page */
+.btn{
+      padding: 0.45rem 0.95rem;
+      border: 0;
+      border-radius: 10rem;
+      background-color: lightskyblue;
+      color: #183044;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: transform 160ms ease, filter 160ms ease;
+}
+.btn:hover{
+      transform: translateY(-0.0625rem);
+      filter: brightness(0.95);
+}
+.btn-approve{
+      background-color: #3b9c84;
+      color: #fff;
+}
+.btn-decline{
+      background-color: #a33b37;
+      color: #fff;
+}
+
+/* text inputs and dropdowns, same look as .login inputs */
+.field{
+      min-height: 2.4rem;
+      padding: 0.45rem 0.8rem;
+      border: 0.0625rem solid #d6e1e8;
+      border-radius: 0.55rem;
+      background-color: #fff;
+      color: #183044;
+      font: inherit;
+      font-size: 0.85rem;
+}
+.field:focus{
+      outline: none;
+      border-color: #318bb0;
+      box-shadow: 0 0 0 0.1875rem rgba(49, 139, 176, 0.14);
+}
+
+/* small coloured status label */
+.badge{
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10rem;
+      background-color: #e8f4fa;
+      color: #15779b;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+}
+.badge-ok{
+      background-color: #e3f4ee;
+      color: #2f7d69;
+}
+.badge-alert{
+      background-color: #fbe9e8;
+      color: #a33b37;
+}
